@@ -1,6 +1,6 @@
 # node-red-contrib-netpie
 
-A Node-RED node collection for connecting to NETPIE/NEXPIE IoT Platform. This package provides comprehensive IoT device simulation, data management, and cloud communication capabilities.
+A Node-RED node collection for connecting to NETPIE IoT Platform. This package provides comprehensive IoT device simulation, data management, and cloud communication capabilities.
 
 ## Installation
 
@@ -70,8 +70,7 @@ Before using any nodes, configure your NETPIE device credentials:
 
 1. Add a **Device Config** node
 2. Enter your Device ID and Token from NETPIE Portal
-3. Configure the connection endpoint (NETPIE/NEXPIE)
-4. Set up channel configuration if needed
+3. Set up realtime channel configuration if needed
 
 ### Real-time Features
 Some nodes support real-time features that require channel connections:
@@ -148,7 +147,7 @@ NETPIE uses specific topic prefixes:
 ## Requirements
 
 - Node-RED version 1.0.0+
-- NETPIE/NEXPIE account and registered devices
+- NETPIE account and registered devices
 - Valid Device ID and Token from NETPIE Portal
 
 ## Dependencies
@@ -162,7 +161,6 @@ NETPIE uses specific topic prefixes:
 ## Support
 
 - [NETPIE Documentation](https://docs.netpie.io/)
-- [NEXPIE Platform](https://nexpie.io/)
 - [GitHub Issues](https://github.com/chavee/node-red-contrib-netpie/issues)
 
 ## License
