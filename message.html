@@ -1,0 +1,166 @@
+<script type="text/javascript">
+    RED.nodes.registerType('message',{
+        category: 'netpie',
+        color: '#90cc90',
+        defaults: {
+            name :  {value: "message"},
+
+            deviceconfig: {
+                value: "Default",
+                type: "deviceconfig"
+            },
+
+            active: {value: true},
+            topics: {value: ""},
+            outputType: {value: "String"}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "font-awesome/fa-commenting-o",
+
+        outputLabels: ["message"],
+
+        label: function() {
+            return this.name||"message";
+        },
+        oneditprepare: function() {
+            this.editor = RED.editor.createEditor({
+                id: 'node-input-topics-editor',
+                value: $("#node-input-topics").val(),
+                globals: {
+                    msg:true,
+                    context:true,
+                    RED: true,
+                    util: true,
+                    flow: true,
+                    global: true,
+                    console: true,
+                    Buffer: true,
+                    setTimeout: true,
+                    clearTimeout: true,
+                    setInterval: true,
+                    clearInterval: true
+                }
+            });
+        },
+        oneditsave: function() {
+            $("#node-input-topics").val(this.editor.getValue());
+            this.editor.destroy();
+            delete this.editor;
+        },
+        oneditcancel: function() {
+            this.editor.destroy();
+            delete this.editor;
+        }
+
+    });
+</script>
+
+<script type="text/x-red" data-template-name="message">
+
+    <div class="form-row">
+        <label for="node-input-active"><i class="icon-cog"></i> Active</label>
+        <input type="checkbox" id="node-input-active" style="margin-left:5px; vertical-align:top; width:auto;">
+        Enabled
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-deviceconfig"><i class="icon-cog"></i> Device </label>
+        <input type="text" id="node-input-deviceconfig">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-outputType">Output Type</label>
+        <select id="node-input-outputType" style="width:250px;">
+            <option value="String">String</option>
+            <option value="Buffer">Buffer</option>
+            <option value="JSON">JSON</option>
+        </select>
+    </div>
+
+    <div class="form-row node-text-editor-row" style="position:relative">
+        @msg topics to be subscribed
+
+        <input type="hidden" id="node-input-topics" autofocus="autofocus">
+        <div style="height: 120px; min-height:80px;" class="node-text-editor" id="node-input-topics-editor"></div>
+    </div>
+
+
+</script>
+
+<script type="text/x-red" data-help-name="message">
+    <p>The Message node subscribes to and receives real-time messages from specific NETPIE/NEXPIE device topics. It acts as a lightweight message listener focused on @msg topics without the full device simulation capabilities.</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Active</dt>
+        <dd>Enable/disable the node operation</dd>
+
+        <dt>Name</dt>
+        <dd>The name of the node displayed in the flow</dd>
+
+        <dt>Device</dt>
+        <dd>Select the device configuration to connect and subscribe to messages</dd>
+
+        <dt>Output Type</dt>
+        <dd>Define the format of the output message payload:
+            <ul>
+                <li><b>String</b>: Output as plain text string</li>
+                <li><b>Buffer</b>: Output as binary buffer</li>
+                <li><b>JSON</b>: Parse and output as JSON object</li>
+            </ul>
+        </dd>
+
+        <dt>@msg topics to be subscribed</dt>
+        <dd>Define the specific message topics to subscribe to using MQTT topic patterns</dd>
+    </dl>
+
+    <h3>Topic Subscription</h3>
+    <p>Configure the topics in the editor field using MQTT topic patterns:</p>
+    <ul>
+        <li><b>Specific topics</b>: <code>@msg/temperature</code>, <code>@msg/humidity</code></li>
+        <li><b>Wildcard subscriptions</b>: <code>@msg/#</code> (all message topics)</li>
+        <li><b>Multiple topics</b>: One topic per line in the editor</li>
+        <li><b>Topic patterns</b>: <code>@msg/sensor/+/data</code> (single-level wildcard)</li>
+    </ul>
+
+    <h3>Input</h3>
+    <p>Accepts messages to trigger manual operations or dynamic topic subscriptions:</p>
+    <dl class="message-properties">
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>Optional. Add or modify subscription topics dynamically</dd>
+        <dt>action <span class="property-type">string</span></dt>
+        <dd>Optional. Actions like "subscribe" or "unsubscribe" for dynamic topic management</dd>
+    </dl>
+
+
+    <h3>Topic Pattern Examples</h3>
+    <pre>// Single topic
+@msg/temperature
+
+// Multiple specific topics
+@msg/temperature
+@msg/humidity
+@msg/pressure
+
+// Wildcard - all message topics
+@msg/#
+
+// Pattern matching
+@msg/sensor/+/data
+@msg/building/floor1/+/temperature</pre>
+
+    <h3>Notes</h3>
+    <ul>
+        <li>This node is receive-only and cannot publish messages</li>
+        <li>It requires a valid device configuration for authentication</li>
+        <li>Topic patterns follow standard MQTT wildcard conventions</li>
+        <li>The node automatically reconnects if the connection is lost</li>
+        <li>Use this node when you only need message subscription without device simulation features</li>
+    </ul>
+</script>

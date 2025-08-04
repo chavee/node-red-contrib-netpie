@@ -1,0 +1,406 @@
+<script type="text/x-red" data-template-name="command">
+
+    <div class="form-row">
+        <label for="node-input-name">Name<span data-i18n="common.label.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]common.label.name">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-commandtype">Command</label>
+        <select id="node-input-commandtype" style="width:70%;">
+            <option value="publish">Publish Message</option>
+            <option value="writeshadow">Write Shadow</option>
+            <option value="getshadow">Get Shadow</option>
+            <option value="getstatus">Get Device Status</option>
+            <option value="push">Push Notification</option>
+        </select>
+    </div>
+
+    <!-- Publish Message Settings -->
+    <div id="settings-publish" class="command-settings">
+        <div class="form-row node-row-property">
+            <label>Topic</label>
+            <input type="text" id="node-input-topicproperty" style="width:70%;">
+            <input type="hidden" id="node-input-topicpropertyType">
+        </div>
+
+        <div class="form-row node-row-property">
+            <label>Payload</label>
+            <input type="text" id="node-input-payloadproperty" style="width:70%;">
+            <input type="hidden" id="node-input-payloadpropertyType">
+        </div>
+    </div>
+
+    <!-- Write Shadow Settings -->
+    <div id="settings-writeshadow" class="command-settings" style="display: none;">
+        <div class="form-row">
+            <label>Input format</label>
+            <select id="node-input-inputformat" style="width:70%;">
+                <option value="json">Shadow JSON</option>
+                <option value="field">Field</option>
+            </select>
+        </div>
+
+        <div class="node-row-shadowcustom">
+            <div class="form-row node-row-property">
+                <label>Payload</label>
+                <input type="text" id="node-input-shadowproperty" style="width:70%;">
+                <input type="hidden" id="node-input-shadowpropertyType">
+            </div>
+
+            <div class="form-row node-row-property">
+                <label></label>
+                <select id="node-input-shadowformatmode" style="width:70%;">
+                    <option value="auto">Auto format</option>
+                    <option value="manual">Manual</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="node-row-fieldcustom">
+            <div>
+                <label>Combine each</label>
+            </div>
+            <div class="form-row node-row-property">
+                <label>Key : </label>
+                <input type="text" id="node-input-fieldkeyproperty" style="width:70%;">
+                <input type="hidden" id="node-input-fieldkeypropertyType">
+            </div>
+            <div class="form-row node-row-property">
+                <label>Value : </label>
+                <input type="text" id="node-input-fieldvalueproperty" style="width:70%;">
+                <input type="hidden" id="node-input-fieldvaluepropertyType">
+            </div>
+
+            <div class="form-row">
+                <label style="width:auto;">Write shadow:</label>
+                <select id="node-input-shadowwritemode" style="width:150px; margin-left:10px;">
+                    <option value="merge">merge</option>
+                    <option value="replace">replace</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Push Notification Settings -->
+    <div id="settings-push" class="command-settings" style="display: none;">
+        <div class="form-row node-row-property">
+            <label>Title</label>
+            <input type="text" id="node-input-pushtitle" style="width:70%;">
+            <input type="hidden" id="node-input-pushtitleType">
+        </div>
+        <div class="form-row node-row-property">
+            <label>Subtitle</label>
+            <input type="text" id="node-input-pushsubtitle" style="width:70%;">
+            <input type="hidden" id="node-input-pushsubtitleType">
+        </div>
+        <div class="form-row node-row-property">
+            <label>Body</label>
+            <input type="text" id="node-input-pushbody" style="width:70%;">
+            <input type="hidden" id="node-input-pushbodyType">
+        </div>
+    </div>
+
+</script>
+
+<script type="text/javascript">
+    RED.nodes.registerType('command',{
+        category: 'netpie',
+        color:"#99ddff",
+        defaults: {
+            name: {value: "command"},
+            commandtype: {value: "publish"},
+
+            // Publish Message properties
+            topicproperty: { value: ""},
+            topicpropertyType: { value: "@msg"},
+            payloadproperty: { value: "payload"},
+            payloadpropertyType: { value: "msg"},
+
+            // Write Shadow properties
+            inputformat: {value: "json"},
+            shadowproperty: { value: "payload"},
+            shadowpropertyType: { value: "msg"},
+            shadowformatmode: { value: "auto"},
+            fieldkeyproperty: { value: ""},
+            fieldkeypropertyType: { value: "str"},
+            fieldvalueproperty: { value: ""},
+            fieldvaluepropertyType: { value: "msg"},
+            shadowwritemode: { value: "merge"},
+
+            // Get Shadow properties
+            commandproperty: { value: "payload"},
+            commandpropertyType: { value: "msg"},
+
+            // Push Notification properties
+            pushtitle: { value: ""},
+            pushtitleType: { value: "str"},
+            pushsubtitle: { value: ""},
+            pushsubtitleType: { value: "str"},
+            pushbody: { value: ""},
+            pushbodyType: { value: "str"}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "switch.svg",
+
+        button: {
+            enabled: function() {
+                return true;
+            },
+            visible: function() {
+                return true;
+            },
+            onclick: function() {
+                var label = (this.name||this.commandtype);
+                var node = this;
+                $.ajax({
+                    url: "inject/"+this.id,
+                    type:"POST",
+                    success: function(resp, textStatus, xhr) {
+                        RED.notify(node._("inject.success",{label:label}),"success");
+                    },
+                    error: function(jqXHR,textStatus,errorThrown) {
+                        // Handle error
+                    }
+                });
+            }
+        },
+
+        label: function() {
+            return this.name || `${this.commandtype} command`;
+        },
+        labelStyle: function() {
+            return this.name?"node_label_italic":"";
+        },
+
+        oneditprepare: function() {
+            var node = this;
+
+            // Initialize typed inputs for publish
+            $("#node-input-topicproperty").typedInput({
+                typeField: $("#node-input-topicpropertyType"),
+                types: [
+                    { value: "msg", label: "msg.", hasValue: true },
+                    { value: "@msg", label: "@msg", hasValue: true },
+                    { value: "@private", label: "@private", hasValue: true },
+                    { value: "str", label: "string", hasValue: true }
+                ]
+            });
+
+            $("#node-input-payloadproperty").typedInput({
+                typeField: $("#node-input-payloadpropertyType"),
+                types: [
+                    { value: "msg", label: "msg.", hasValue: true },
+                    { value: "json", label: "JSON", hasValue: true },
+                    { value: "str", label: "string", hasValue: true }
+                ]
+            });
+
+            // Initialize typed inputs for write shadow
+            $("#node-input-shadowproperty").typedInput({
+                typeField: $("#node-input-shadowpropertyType"),
+                types: [
+                    { value: "msg", label: "msg.", hasValue: true },
+                    { value: "json", label: "JSON", hasValue: true },
+                    { value: "str", label: "string", hasValue: true }
+                ]
+            });
+
+            $("#node-input-fieldkeyproperty").typedInput({
+                typeField: $("#node-input-fieldkeypropertyType"),
+                types: [
+                    { value: "msg", label: "msg.", hasValue: true },
+                    { value: "str", label: "string", hasValue: true }
+                ]
+            });
+
+            $("#node-input-fieldvalueproperty").typedInput({
+                typeField: $("#node-input-fieldvaluepropertyType"),
+                types: [
+                    { value: "msg", label: "msg.", hasValue: true },
+                    { value: "json", label: "JSON", hasValue: true },
+                    { value: "str", label: "string", hasValue: true }
+                ]
+            });
+
+            // Initialize typed inputs for push notification
+            $("#node-input-pushtitle").typedInput({
+                typeField: $("#node-input-pushtitleType"),
+                types: [
+                    { value: "msg", label: "msg.", hasValue: true },
+                    { value: "str", label: "string", hasValue: true }
+                ]
+            });
+
+            $("#node-input-pushsubtitle").typedInput({
+                typeField: $("#node-input-pushsubtitleType"),
+                types: [
+                    { value: "msg", label: "msg.", hasValue: true },
+                    { value: "str", label: "string", hasValue: true }
+                ]
+            });
+
+            $("#node-input-pushbody").typedInput({
+                typeField: $("#node-input-pushbodyType"),
+                types: [
+                    { value: "msg", label: "msg.", hasValue: true },
+                    { value: "str", label: "string", hasValue: true }
+                ]
+            });
+
+            // // Initialize typed inputs for get shadow
+            // $("#node-input-commandproperty").typedInput({
+            //     typeField: $("#node-input-commandpropertyType"),
+            //     types: [
+            //         { value: "msg", label: "msg.", hasValue: true },
+            //         { value: "str", label: "string", hasValue: true }
+            //     ]
+            // });
+
+            // Command type change handler
+            $("#node-input-commandtype").change(function() {
+                var selectedType = $(this).val();
+                showSettingsForType(selectedType);
+            });
+
+            // Input format change handler for write shadow
+            $("#node-input-inputformat").change(function() {
+                var format = $(this).val();
+                if (format === 'json') {
+                    $('.node-row-shadowcustom').show();
+                    $('.node-row-fieldcustom').hide();
+                } else {
+                    $('.node-row-shadowcustom').hide();
+                    $('.node-row-fieldcustom').show();
+                }
+            });
+
+            function showSettingsForType(type) {
+                // Hide all settings
+                $('.command-settings').hide();
+
+                // Show settings for selected type
+                $('#settings-' + type).show();
+
+                // Handle write shadow input format
+                if (type === 'writeshadow') {
+                    var format = $("#node-input-inputformat").val();
+                    if (format === 'json') {
+                        $('.node-row-shadowcustom').show();
+                        $('.node-row-fieldcustom').hide();
+                    } else {
+                        $('.node-row-shadowcustom').hide();
+                        $('.node-row-fieldcustom').show();
+                    }
+                }
+            }
+
+            // Initialize with current command type
+            showSettingsForType(this.commandtype);
+        }
+    });
+</script>
+
+<script type="text/x-red" data-help-name="command">
+    <p>The Command node provides various operations for interacting with NETPIE/NEXPIE devices including publishing messages, managing shadow data, checking device status, and sending push notifications.</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Name</dt>
+        <dd>The name of the node displayed in the flow</dd>
+
+        <dt>Command</dt>
+        <dd>Select the type of operation to perform:
+            <ul>
+                <li><b>Publish Message</b>: Send data to a device topic</li>
+                <li><b>Write Shadow</b>: Update device shadow data</li>
+                <li><b>Get Shadow</b>: Retrieve current shadow data</li>
+                <li><b>Get Device Status</b>: Check device connection status</li>
+                <li><b>Push Notification</b>: Send push notifications to mobile devices</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <h3>Command Types</h3>
+
+    <h4>Publish Message</h4>
+    <p>Sends messages to device topics for communication between devices or applications.</p>
+    <dl class="message-properties">
+        <dt>Topic</dt>
+        <dd>The target topic to publish to (supports @msg and @private prefixes)</dd>
+        <dt>Payload</dt>
+        <dd>The message payload to send (can be from msg property, JSON, or string)</dd>
+    </dl>
+
+    <h4>Write Shadow</h4>
+    <p>Updates the device shadow data which represents the desired or reported state of a device.</p>
+    <dl class="message-properties">
+        <dt>Input format</dt>
+        <dd>Choose between Shadow JSON (complete shadow object) or Field (key-value pair)</dd>
+        <dt>Payload</dt>
+        <dd>The shadow data to write (JSON object or field value)</dd>
+        <dt>Write shadow mode</dt>
+        <dd>
+            <ul>
+                <li><b>merge</b>: Merge new data with existing shadow</li>
+                <li><b>replace</b>: Replace entire shadow with new data</li>
+            </ul>
+        </dd>
+    </dl>
+
+    <h4>Push Notification</h4>
+    <p>Sends push notifications to mobile devices registered with the NETPIE platform.</p>
+    <dl class="message-properties">
+        <dt>Title</dt>
+        <dd>The notification title</dd>
+        <dt>Subtitle</dt>
+        <dd>Optional subtitle for the notification</dd>
+        <dt>Body</dt>
+        <dd>The main notification message content</dd>
+    </dl>
+
+    <h3>Input</h3>
+    <p>Accepts trigger messages to execute the configured command. Input properties can override configured values:</p>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>Used as the payload for publish/shadow operations when configured</dd>
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>Can override the configured topic for publish operations</dd>
+        <dt>title <span class="property-type">string</span></dt>
+        <dd>Can override the configured title for push notifications</dd>
+        <dt>body <span class="property-type">string</span></dt>
+        <dd>Can override the configured body for push notifications</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <p>Returns the result of the command execution:</p>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">object</span></dt>
+        <dd>The response from the NETPIE platform containing status and result data</dd>
+        <dt>statusCode <span class="property-type">number</span></dt>
+        <dd>HTTP status code of the operation</dd>
+        <dt>command <span class="property-type">string</span></dt>
+        <dd>The type of command that was executed</dd>
+    </dl>
+
+    <h3>Usage Examples</h3>
+    <ul>
+        <li><b>Remote Control</b>: Send commands to control IoT devices remotely</li>
+        <li><b>Data Synchronization</b>: Update device shadow to synchronize state across multiple devices</li>
+        <li><b>Status Monitoring</b>: Check device connectivity and operational status</li>
+        <li><b>User Notifications</b>: Send alerts and notifications to mobile applications</li>
+        <li><b>Device Configuration</b>: Update device settings through shadow writes</li>
+    </ul>
+
+    <h3>Button Function</h3>
+    <p>The node includes a button that can be clicked to manually trigger the command execution for testing purposes.</p>
+
+    <h3>Notes</h3>
+    <ul>
+        <li>All operations require a valid device configuration with proper authentication</li>
+        <li>Shadow operations work with the device's virtual representation in the cloud</li>
+        <li>Push notifications require devices to be registered for notifications</li>
+        <li>Topic names should follow NETPIE naming conventions (@msg/ or @private/ prefixes)</li>
+    </ul>
+</script>

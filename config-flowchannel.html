@@ -1,0 +1,43 @@
+<script type="text/javascript">
+    RED.nodes.registerType('flowchannel', {
+        category: 'config',
+        defaults: {
+            flowchannelname: {value: ""},
+            flowchannel: {value: ""},
+            flowchannelType: {value: ""},
+            flowchannelkey: {value: ""},
+            active: {value: true},
+            endpoint: {value: ""},
+            endpointType: {value: "custom"}
+        },
+        label: function () {
+            let that = this;
+            return  this.flowchannelname || (this.flowchannelkey? (this.flowchannelkey.split(':')[0]) : 'DEFAULT');
+        },
+        oneditprepare: function() {
+            $("#node-config-input-flowchannelname").typedInput({
+                typeField: $("#node-config-input-flowchannelType"),
+                types: [
+                    {
+                        value: "custom",
+                        label: ">",
+                        hasValue: true
+                    }
+                ]
+            });
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="flowchannel">
+    <div class="form-row">
+        <label for="node-input-flowchannelname" style="display: inline-block; width: 150px;"> <i class="fa fa-tag fa-fw"></i> Channel Name</label>
+        <input type="text" id="node-config-input-flowchannelname" placeholder="" style="display: inline-block; width: calc(100% - 162px);">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-flowchannelkey" style="display: inline-block; width: 150px;"> <i class="fa fa-tag fa-fw"></i>Channel Key</label>
+        <input type="text" id="node-config-input-flowchannelkey" placeholder="FWAGxxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" style="display: inline-block; width: calc(100% - 160px);">
+
+    </div>
+</script>

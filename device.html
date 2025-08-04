@@ -1,0 +1,183 @@
+<script type="text/javascript">
+    RED.nodes.registerType('device',{
+        category: 'netpie',
+        color: '#00aae0',
+        defaults: {
+            name :  {value: "device"},
+
+            deviceconfig: {
+                value: "Default",
+                type: "deviceconfig"
+            },
+
+            topics: {value: "@msg/#\n"},
+            active: {value: true},
+            subshadow: {value: true},
+            subprivate: {value: true},
+            initshadow: {value: true},
+            outputType: {value: "String"}
+        },
+        inputs:1,
+        outputs:1,
+        icon: "font-awesome/fa-cogs",
+
+        label: function() {
+            return this.name||"device";
+        },
+        oneditprepare: function() {
+            this.editor = RED.editor.createEditor({
+                id: 'node-input-topics-editor',
+                //mode: 'ace/mode/nrjavascript',         // validate js
+                value: $("#node-input-topics").val(),
+                globals: {
+                    msg:true,
+                    context:true,
+                    RED: true,
+                    util: true,
+                    flow: true,
+                    global: true,
+                    console: true,
+                    Buffer: true,
+                    setTimeout: true,
+                    clearTimeout: true,
+                    setInterval: true,
+                    clearInterval: true
+                }
+            });
+        },
+        oneditsave: function() {
+            $("#node-input-topics").val(this.editor.getValue());
+            this.editor.destroy();
+            delete this.editor;
+        },
+        oneditcancel: function() {
+            this.editor.destroy();
+            delete this.editor;
+        }
+
+    });
+</script>
+
+<script type="text/x-red" data-template-name="device">
+
+    <div class="form-row">
+        <label for="node-input-active" style="display: inline-block; width: 120px;"><i class="icon-cog"></i> Active</label>
+        <input type="checkbox" id="node-input-active" style="margin-left:10px; vertical-align:top; width:auto;">
+        Enabled
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-name" style="display: inline-block; width: 120px;"><i class="icon-tag"></i> Namex</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-deviceconfig" style="display: inline-block; width: 120px;"><i class="icon-cog"></i> Device </label>
+        <input type="text" id="node-input-deviceconfig">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-outputType" style="display: inline-block; width: 120px;">Msg Output Type</label>
+        <select id="node-input-outputType" style="width:250px;">
+            <option value="String">String</option>
+            <option value="Buffer">Buffer</option>
+            <option value="JSON">JSON</option>
+        </select>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-subshadow" style="display: inline-block; width: 120px;"><i class="icon-cog"></i> Options</label>
+        <input type="checkbox" id="node-input-subshadow" style="margin-left:5px; vertical-align:top; width:auto;"> Receive shadow update events<br>
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-subprivate" style="display: inline-block; width: 120px;"><i class="icon-cog"></i></label>
+        <input type="checkbox" id="node-input-subprivate" style="margin-left:5px; vertical-align:top; width:auto;"> Receive private messages
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-initshadow" style="display: inline-block; width: 120px;"><i class="icon-cog"></i></label>
+        <input type="checkbox" id="node-input-initshadow" style="margin-left:5px; vertical-align:top; width:auto;"> Output shadow data on connected
+    </div>
+
+    <div class="form-row node-text-editor-row" style="position:relative">
+        <input type="hidden" id="node-input-topics" autofocus="autofocus">
+        <label for="node-input-topics-editor"><i class="icon-cog"></i> Subscribe to</label>
+        <div style="height: 120px; min-height:80px;" class="node-text-editor" id="node-input-topics-editor"></div>
+    </div>
+
+
+</script>
+
+<script type="text/x-red" data-help-name="device">
+    <p>The Device node simulates a real IoT device that can send and receive data using Device ID and Token from NETPIE/NEXPIE Portal to identify this node as a device.</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Active</dt>
+        <dd>Enable/disable the node operation</dd>
+
+        <dt>Name</dt>
+        <dd>The name of the node displayed in the flow</dd>
+
+        <dt>Device</dt>
+        <dd>Select the device configuration to use (Device ID and Token)</dd>
+
+        <dt>Msg Output Type</dt>
+        <dd>Define the output data format: String, Buffer, or JSON</dd>
+
+        <dt>Subscribe to</dt>
+        <dd>Define topics to subscribe to for receiving data using MQTT topic format</dd>
+    </dl>
+
+    <h3>Data Reception Options</h3>
+    <ul>
+        <li><b>Receive shadow update events</b>: Enable real-time notifications when shadow data changes. If disabled, shadow data can still be accessed manually but won't automatically update when changed.</li>
+        <li><b>Receive private messages</b>: Enable real-time reception of private messages sent from private topics. If disabled, private messages won't be received automatically.</li>
+        <li><b>Output shadow data on connected</b>: Output current shadow data immediately upon successful connection</li>
+    </ul>
+
+    <h3>Subscription Topics</h3>
+    <p>There are 2 main types:</p>
+    <ul>
+        <li><b>Message topics</b>: Start with <code>@msg</code> such as <code>@msg/temperature</code></li>
+        <li><b>Private topics</b>: Start with <code>@private</code> such as <code>@private/command</code></li>
+        <li><b>Wildcard</b>: Use <code>#</code> to receive all topics such as <code>@msg/#</code></li>
+    </ul>
+
+    <h3>Input</h3>
+    <p>Receives data from other nodes to send to specified topics. When a message is received on the input, it will be published to the device's message topic.</p>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">any</span></dt>
+        <dd>The message payload to publish</dd>
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>Optional. Override the default topic for this message</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <p>Outputs data received from subscribed topics to the next node. The message structure includes:</p>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">string | object</span></dt>
+        <dd>The received message payload in the format specified by Output Type</dd>
+        <dt>topic <span class="property-type">string</span></dt>
+        <dd>The topic from which the message was received</dd>
+        <dt>deviceid <span class="property-type">string</span></dt>
+        <dd>The device ID that sent the message</dd>
+        <dt>timestamp <span class="property-type">number</span></dt>
+        <dd>Message timestamp</dd>
+    </dl>
+
+    <h3>Usage Examples</h3>
+    <ul>
+        <li>Simulate a temperature sensor that sends temperature data periodically</li>
+        <li>Receive control commands from a dashboard or mobile application</li>
+        <li>Act as a bidirectional IoT device for data collection and remote control</li>
+        <li>Monitor multiple data streams using wildcard subscriptions</li>
+    </ul>
+
+    <h3>Real-time Channel</h3>
+    <p>Real-time features (shadow updates, private messages) require a channel connection for automatic notifications. If these features are disabled, the node still functions but will only respond to manual triggers and @msg topic subscriptions.</p>
+
+    <h3>Notes</h3>
+    <p>This node requires a valid device configuration with Device ID and Token from NETPIE/NEXPIE Portal. The device must be properly registered and configured in the portal before use.</p>
+</script>

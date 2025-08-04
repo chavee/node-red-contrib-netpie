@@ -1,0 +1,56 @@
+<script type="text/javascript">
+
+    RED.nodes.registerType('deviceconfig', {
+        category: 'config',
+        defaults: {
+            devicename: {value: ""},
+            devicenameType: {value: "custom"},
+
+            deviceid: {value: ""},
+            devicetoken : {value: ""},
+            devicealias: {value: ""},
+
+            flowchannel: {
+                type: "flowchannel"
+            },
+        },
+        label: function () {
+            let that = this;
+            return that.devicename || that.devicealias || '';
+        },
+        oneditprepare: async function() {
+            $("#node-config-input-devicename").typedInput({
+                typeField: $("#node-config-input-devicenameType"),
+                types: [{
+                    value: "custom",
+                    label: ">",
+                    hasValue: true
+                }]
+            });
+        }
+    });
+</script>
+
+<script type="text/x-red" data-template-name="deviceconfig">
+    <div class="form-row">
+        <label for="node-input-name" style="display: inline-block; width: 120px;">Device Name</label>
+        <input type="text" id="node-config-input-devicename" placeholder="Name" style="display: inline-block; width: calc(100% - 138px);">
+        <hidden type="text" id="node-config-input-devicenameType">
+        <hidden type="text" id="node-config-input-devicealias">
+    </div>
+
+    <div class="form-row">
+      <label for="node-config-input-deviceid" style="display: inline-block; width: 120px;"> Device ID</label>
+      <input type="text" id="node-config-input-deviceid" placeholder="Device ID" style="display: inline-block; width: calc(100% - 138px);">
+    </div>
+
+    <div class="form-row">
+      <label for="node-config-input-devicetoken" style="display: inline-block; width: 120px;"> Device Token</label>
+      <input type="text" id="node-config-input-devicetoken" placeholder="Device Token" style="display: inline-block; width: calc(100% - 138px);">
+    </div>
+
+    <div class="form-row">
+       <label for="node-config-input-flowchannel"  style="display: inline-block; width: 120px;"> <i class="icon-cog"></i> Realtime Channel </label>
+       <input type="text" id="node-config-input-flowchannel" style="display: inline-block; width: calc(100% - 138px);">
+   </div>
+</script>

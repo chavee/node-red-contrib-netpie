@@ -1,0 +1,319 @@
+<script type="text/javascript">
+    let beginabsolutedateproperty_storevalue = {};
+    let beginabsolutedateproperty_lasttype = '';
+    let endabsolutedateproperty_storevalue = {};
+    let endabsolutedateproperty_lasttype = '';
+
+    RED.nodes.registerType('feed',{
+        category: 'netpie',
+        color: '#90cc90',
+        defaults: {
+            name :  {value: "feed"},
+
+            deviceconfig: {
+                value: "Default",
+                type: "deviceconfig"
+            },
+
+            active: {value: true},
+            subfeedupdated: {value: true},
+
+            beginabsolutedateproperty: {value: null},
+            beginabsolutedatepropertyType: {value: 'msg'},
+            beginrelativevalue: {value: 5},
+            beginrelativeunit: {value: 'minutes'},
+
+            endabsolutedateproperty: {value: null},
+            endabsolutedatepropertyType: {value: 'msg'},
+            endrelativevalue: {value: 0},
+            endrelativeunit: {value: 'minutes'},
+
+            samplingvalue: {value: 30},
+            samplingunit: {value: 'seconds'}
+
+        },
+        inputs:1,
+        outputs:1,
+        icon: "font-awesome/fa-bar-chart-o",
+
+        outputLabels: ["feed"],
+
+        label: function() {
+            return this.name||"feed";
+        },
+        oneditprepare: function() {
+            $("#node-input-beginabsolutedateproperty").typedInput({
+                typeField: $("#node-input-beginabsolutedatepropertyType"),
+                types:[
+                    {
+                            value: "msg",
+                            label: "msg.from",
+                            hasValue: false,
+                    },
+                    {
+                            value: "date",
+                            label: "datetime",
+                            hasValue: true,
+                    },
+                    {
+                            value: "str",
+                            label: "relative time",
+                            hasValue: true,
+                    }
+                ]
+            });
+
+
+            $("#node-input-endabsolutedateproperty").typedInput({
+                typeField: $("#node-input-endabsolutedatepropertyType"),
+                types:[
+                    {
+                            value: "msg",
+                            label: "msg.to",
+                            hasValue: false
+                    },
+                    {
+                            value: "date",
+                            label: "datetime",
+                            hasValue: true
+                    },
+                    {
+                            value: "str",
+                            label: "relative time",
+                            hasValue: true
+                    }
+                ]
+            });
+
+            $("#node-input-beginabsolutedateproperty").on('change', function(event, type, value) {
+                console.log({value, type, beginabsolutedateproperty_storevalue})
+                const defvar = {
+                    'date' : new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').replace(/[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/,'00:00:00 +7:00'),
+                    'str'  : '-3h'
+                }
+                if (type != beginabsolutedateproperty_lasttype) {
+                    value = beginabsolutedateproperty_storevalue[type] || defvar[type];
+                    beginabsolutedateproperty_lasttype = type;
+                }
+                beginabsolutedateproperty_storevalue[type] = value;
+                if (value && value != $("#node-input-beginabsolutedateproperty").typedInput('value')) {
+                    $("#node-input-beginabsolutedateproperty").typedInput('value', value);
+                }
+            });
+
+            $("#node-input-endabsolutedateproperty").on('change', function(event, type, value) {
+                //console.log({value, type, beginabsolutedateproperty_storevalue})
+                const defvar = {
+                    'date' : new Date().toISOString().replace(/T/, ' ').replace(/\..+/, '').replace(/[0-9][0-9]:[0-9][0-9]:[0-9][0-9]/,'23:59:59 +7:00'),
+                    'str'  : 'now'
+                }
+                if (type != endabsolutedateproperty_lasttype) {
+                    value = endabsolutedateproperty_storevalue[type] || defvar[type];
+                    endabsolutedateproperty_lasttype = type;
+                }
+                endabsolutedateproperty_storevalue[type] = value;
+                if (value && value != $("#node-input-endabsolutedateproperty").typedInput('value')) {
+                    $("#node-input-endabsolutedateproperty").typedInput('value', value);
+                }
+            });
+
+
+        }
+
+    });
+</script>
+
+<script type="text/x-red" data-template-name="feed">
+
+    <div class="form-row">
+        <label for="node-input-active"><i class="icon-cog"></i> Active</label>
+        <input type="checkbox" id="node-input-active" style="margin-left:5px; vertical-align:top; width:auto;">
+        Enabled
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-name"><i class="icon-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-deviceconfig"><i class="icon-cog"></i> Device </label>
+        <input type="text" id="node-input-deviceconfig">
+    </div>
+
+<!--
+    <div class="form-row">
+        <label for="node-input-platform"> <i class="icon-cog"></i> Platform </label>
+        <input type="text" id="node-input-platform">
+    </div>
+-->
+
+    <div class="form-row">
+        <label for="node-input-subfeedupdated"><i class="icon-cog"></i> Watch </label>
+        <input type="checkbox" id="node-input-subfeedupdated" style="margin-left:5px; vertical-align:top; width:auto;"> Feed updated <br>
+    </div>
+
+
+<p style="margin-top:25px;"><hr /></p>
+
+    <div class="form-row">
+        <label for="node-input-bordervalue"> Range From</label>
+        <input type="text" id="node-input-beginabsolutedateproperty" placeholder="-1h or 2021-01-01 08:00:00+7:00">
+        <input type="hidden" id="node-input-beginabsolutedatepropertyType">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-beginrelativeunit"> </label>
+        OR &nbsp;&nbsp;<input type="number" id="node-input-beginrelativevalue" placeholder="1" style="width:15%;">
+        <select id="node-input-beginrelativeunit" style="width:30%;">
+            <option value="seconds">Seconds</option>
+            <option value="minutes">Minutes</option>
+            <option value="hours">Hour</option>
+            <option value="days">Day</option>
+            <option value="months">Month</option>
+            <option value="years">Year</option>
+        </select>
+        &nbsp;&nbsp;ago
+    </div>
+
+
+    <div class="form-row">
+        <label for="node-input-endabsolutedateproperty"> Range To</label>
+        <input type="text" id="node-input-endabsolutedateproperty" placeholder="now or 2021-01-01 17:00:00+7:00">
+        <input type="hidden" id="node-input-endabsolutedatepropertyType">
+    </div>
+
+    <div class="form-row">
+        <label for="node-input-endrelativeunit"> </label>
+        OR &nbsp;&nbsp;<input type="number" id="node-input-endrelativevalue" placeholder="1" style="width:15%;">
+        <select id="node-input-endrelativeunit" style="width:30%;">
+            <option value="seconds">Seconds</option>
+            <option value="minutes">Minutes</option>
+            <option value="hours">Hour</option>
+            <option value="days">Day</option>
+            <option value="months">Month</option>
+            <option value="years">Year</option>
+        </select>
+        &nbsp;&nbsp;ago
+    </div>
+
+
+    <div class="form-row">
+        <label for="node-input-samplingvalue"> Sampling</label>
+        Average on&nbsp;&nbsp;
+        <input type="number" id="node-input-samplingvalue" placeholder="1" style="width:15%;">
+        <select id="node-input-samplingunit" style="width:30%;">
+            <option value="seconds">Seconds</option>
+            <option value="minutes">Minutes</option>
+            <option value="hours">Hour</option>
+            <option value="days">Day</option>
+            <option value="months">Month</option>
+            <option value="years">Year</option>
+        </select>
+    </div>
+
+
+</script>
+
+<script type="text/x-red" data-help-name="feed">
+    <p>The Feed node retrieves historical time-series data from NETPIE/NEXPIE devices within specified time ranges. It provides access to stored device data for analysis, reporting, and visualization purposes.</p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt>Active</dt>
+        <dd>Enable/disable the node operation</dd>
+
+        <dt>Name</dt>
+        <dd>The name of the node displayed in the flow</dd>
+
+        <dt>Device</dt>
+        <dd>Select the device configuration to retrieve feed data from</dd>
+
+        <dt>Watch Feed updated</dt>
+        <dd>Enable to automatically receive real-time feed data as it arrives. If disabled, you can still get historical data by triggering the node manually, but won't receive live data updates.</dd>
+    </dl>
+
+    <h3>Time Range Configuration</h3>
+
+    <h4>Range From</h4>
+    <p>Specify the start time for data retrieval:</p>
+    <ul>
+        <li><b>msg.from</b>: Use timestamp from incoming message</li>
+        <li><b>datetime</b>: Specify exact datetime (format: YYYY-MM-DD HH:MM:SS +TZ)</li>
+        <li><b>relative time</b>: Use relative time string (e.g., "-1h", "-30m", "-7d")</li>
+        <li><b>OR</b>: Use numeric relative time with units (seconds, minutes, hours, days, months, years)</li>
+    </ul>
+
+    <h4>Range To</h4>
+    <p>Specify the end time for data retrieval:</p>
+    <ul>
+        <li><b>msg.to</b>: Use timestamp from incoming message</li>
+        <li><b>datetime</b>: Specify exact datetime</li>
+        <li><b>relative time</b>: Use relative time string (e.g., "now", "-1h")</li>
+        <li><b>OR</b>: Use numeric relative time with units</li>
+    </ul>
+
+    <h4>Sampling</h4>
+    <p>Configure data sampling/aggregation:</p>
+    <ul>
+        <li>Average data points over specified intervals (seconds, minutes, hours, days, months, years)</li>
+        <li>Reduces data volume and provides statistical aggregation</li>
+        <li>Useful for trend analysis over longer periods</li>
+    </ul>
+
+    <h3>Input</h3>
+    <p>Accepts trigger messages to fetch historical data:</p>
+    <dl class="message-properties">
+        <dt>from <span class="property-type">string | number</span></dt>
+        <dd>Optional. Start timestamp or datetime string to override configuration</dd>
+        <dt>to <span class="property-type">string | number</span></dt>
+        <dd>Optional. End timestamp or datetime string to override configuration</dd>
+        <dt>field <span class="property-type">string</span></dt>
+        <dd>Optional. Specific field name to retrieve (if not specified, all fields are returned)</dd>
+    </dl>
+
+    <h3>Output</h3>
+    <p>Outputs historical feed data:</p>
+    <dl class="message-properties">
+        <dt>payload <span class="property-type">array</span></dt>
+        <dd>Array of data points, each containing timestamp and field values</dd>
+        <dt>count <span class="property-type">number</span></dt>
+        <dd>Number of data points returned</dd>
+        <dt>range <span class="property-type">object</span></dt>
+        <dd>Object containing 'from' and 'to' timestamps for the query range</dd>
+        <dt>deviceid <span class="property-type">string</span></dt>
+        <dd>The device ID that the data belongs to</dd>
+        <dt>sampling <span class="property-type">object</span></dt>
+        <dd>Information about the sampling configuration used</dd>
+    </dl>
+
+    <h3>Data Point Structure</h3>
+    <p>Each data field is output as a separate message:</p>
+    <pre>{
+  "topic": "temp",
+  "payload": 25.4
+}</pre>
+    <h3>Time Format Examples</h3>
+    <ul>
+        <li><b>Absolute datetime</b>: "2022-01-01 08:00:00 +7:00"</li>
+        <li><b>Relative time</b>: "-1h" (1 hour ago), "-30m" (30 minutes ago), "-7d" (7 days ago)</li>
+        <li><b>Current time</b>: "now"</li>
+        <li><b>Timestamp</b>: 1640995200000 (Unix timestamp in milliseconds)</li>
+    </ul>
+
+    <h3>Real-time vs Historical Mode</h3>
+    <ul>
+        <li><b>Real-time mode</b>: When "Watch Feed updated" is enabled, receives live feed data as devices send it</li>
+        <li><b>Historical mode</b>: When "Watch Feed updated" is disabled, fetches historical data based on time range configuration when triggered</li>
+        <li>Real-time mode requires a channel connection for live data</li>
+        <li>Historical mode works without a channel and queries stored data on-demand</li>
+    </ul>
+
+    <h3>Notes</h3>
+    <ul>
+        <li>Feed data is historical and read-only</li>
+        <li>Data availability depends on device activity and data retention policies</li>
+        <li>Large time ranges may return substantial amounts of data - use sampling to manage volume</li>
+        <li>The node requires proper device configuration with valid credentials</li>
+    </ul>
+</script>
