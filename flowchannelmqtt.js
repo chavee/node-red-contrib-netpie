@@ -4,6 +4,7 @@
 
 const mqtt = require('mqtt');
 const PROCESS_START_TIME = Date.now();
+const DEBUG = false;
 
 class FlowChannelMQTT {
     constructor(options = {}) {
@@ -25,10 +26,13 @@ class FlowChannelMQTT {
     }
 
     async connect() {
-        this.log('Initialize connection...');
-
+        if (DEBUG) {
+            this.log('Initialize connection...');
+        }
         if (this.client) {
-            this.log('Existing connection found, disconnecting first');
+            if (DEBUG) {
+                this.log('Existing connection found, disconnecting first');
+            }
             await this.disconnect();
             setTimeout(() => {
                 this.createConnection();
@@ -44,7 +48,6 @@ class FlowChannelMQTT {
     createConnection() {
         let that = this;
 
-        this.log(`Connecting with client ID: ${this.clientid}`);
         this.client = mqtt.connect(this.mqtthost, {
             clientId: this.clientid,
             username: this.username,
@@ -53,90 +56,98 @@ class FlowChannelMQTT {
             keepalive: 15,
             reconnectPeriod: 5000,
             connectTimeout: 5000,
-            // queueQoSZero: false
         });
+        if (DEBUG) {
+            this.log(`Connecting with client ID: ${this.clientid}`);
+        }
 
         this.client.on('connect', () => {
             this.connected = true;
-            this.log('Connected to NETPIE FlowChannel Broker');
             this.emit('connect');
             this.client.subscribe('@private/#');
+            if (DEBUG) {
+                this.log('Connected to NETPIE FlowChannel Broker');
+            }
         });
 
         this.client.on('close', () => {
             this.connected = false;
-            this.log('Closed from NETPIE FlowChannel Broker');
             this.emit('disconnect');
+            if (DEBUG) {
+                this.log('Closed from NETPIE FlowChannel Broker');
+            }
         });
 
         this.client.on('error', (error) => {
-            this.log('MQTT Error:', error);
             this.emit('error', error);
+            if (DEBUG) {
+                this.log('MQTT Error:', error);
+            }
         });
 
         this.client.on('message', (topic, payload) => {
             this.handleIncomingMessage(topic, payload);
         });
-
-        // setInterval(() => {
-        //     console.log(that.client.connected);
-        // },1000);
     }
 
     disconnect() {
         return new Promise((resolve) => {
             if (this.client) {
                 this.connected = false;
-                this.log('Starting disconnect process...');
                 this.client.removeAllListeners();
+                if (DEBUG) {
+                    this.log('Starting disconnect process...');
+                }
 
                 if (this.client.connected || this.client.reconnecting) {
                     this.client.end(true, () => {
                         this.client = null;
                         this.subscriptions.clear();
                         this.messageCache.clear();
-                        this.log('Disconnected and cleaned up completely');
+                        if (DEBUG) {
+                            this.log('Disconnected and cleaned up completely');
+                        }
                         resolve();
                     });
                 } else {
                     this.client = null;
                     this.subscriptions.clear();
                     this.messageCache.clear();
-                    this.log('Client was not connected, cleanup complete');
+                    if (DEBUG) {
+                        this.log('Client was not connected, cleanup complete');
+                    }
                     resolve();
                 }
             } else {
-                this.log('No client to disconnect');
+                if (DEBUG) {
+                    this.log('No client to disconnect');
+                }
                 resolve();
             }
         });
     }
 
     async destroy() {
-        this.log("Destroying MQTT connection...");
         await this.disconnect();
         this.removeAllListeners();
-        this.log("MQTT connection destroyed cleanly");
+        if (DEBUG) {
+            this.log("MQTT connection closed");
+        }
     }
 
     handleIncomingMessage(topic, payload) {
         try {
             let data;
-            // console.log('topic -->', topic)
-            // console.log('payload -->', payload.toString())
             try {
                 data = JSON.parse(payload.toString());
             } catch (e) {
                 data = payload;
             }
-
             // Use high-resolution timestamp for deduplication within short time window
             const now = process.hrtime.bigint();
-
             // Check for duplicates within a very short time window (100ms)
             const shortTimeWindow = 100n * 1000000n;
             let isDuplicate = false;
-
             for (const [, info] of this.messageCache) {
                 if (info.topic === topic &&
                     info.payload === JSON.stringify(data) &&
@@ -368,7 +379,9 @@ class FlowChannelMQTT {
 
         for (const existingCallback of listeners) {
             if (existingCallback === callback) {
-                this.log(`Duplicate callback function object detected for event '${event}', skipping registration`);
+                if (DEBUG) {
+                    this.log(`Duplicate callback function object detected for event '${event}', skipping registration`);
+                }
                 return this;
             }
         }
@@ -388,8 +401,9 @@ class FlowChannelMQTT {
         if (listeners.size === 0) {
             this.eventListeners.delete(event);
         }
-
-        this.log(`Removed callback for event '${event}'`);
+        if (DEBUG) {
+            this.log(`Removed callback for event '${event}'`);
+        }
         return this;
     }
 
@@ -417,17 +431,20 @@ class FlowChannelMQTT {
                 this.log(`Error in event listener for '${event}':`, error);
             }
         }
-
         return eventHandled;
     }
 
     removeAllListeners(event) {
         if (event) {
             this.eventListeners.delete(event);
-            this.log(`Removed all listeners for event '${event}'`);
+            if (DEBUG) {
+                this.log(`Removed all listeners for event '${event}'`);
+            }
         } else {
             this.eventListeners.clear();
-            this.log('Removed all event listeners');
+            if (DEBUG) {
+                this.log('Removed all event listeners');
+            }
         }
         return this;
     }

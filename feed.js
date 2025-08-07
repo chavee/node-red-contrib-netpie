@@ -125,14 +125,12 @@ module.exports = function(RED) {
         }
 
         node.on('close', function(done){
-            console.log('feed ' + config.name + ' closed..');
-
             current.clientstatus = 0;
             updateNodeStatus(current);
 
             setTimeout(() => {
                 done();
-            }, 800);
+            }, 500);
         });
 
         node.on('input', function(msg) {

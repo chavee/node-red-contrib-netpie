@@ -159,20 +159,18 @@ module.exports = function(RED) {
         }
 
         node.on('close', function(done) {
-            console.log('shadow ' + config.name + ' closed..');
-
             if (deviceConfigNode && deviceConfigNode.isConnected()) {
                 deviceConfigNode.unsubscribeDevice();
             }
 
             setTimeout(() => {
                 done();
-            }, 800);
+            }, 500);
         });
 
         node.on('input', function(msg) {
             if (config.active) {
-                if (deviceConfigNode && deviceConfigNode.isConnected()) {  // if mqtt
+                if (deviceConfigNode && deviceConfigNode.isConnected()) {
                     // if button pressed
                     if (!msg.hasOwnProperty('topic') && !msg.hasOwnProperty('payload')) {
                         last_local_get_request = Date.now();
@@ -219,8 +217,6 @@ module.exports = function(RED) {
                             node.send([msg, null]);
                         });
                     }
-
-
                 }
             }
         });

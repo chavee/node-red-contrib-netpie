@@ -1,20 +1,17 @@
-require('dotenv').config()
+require('dotenv').config();
+
 module.exports = function(RED) {
 	const MQTT = require("mqtt");
-    const jsonic = require('jsonic');
     const URL = require('url');
     const CONFIG = require('./config');
+    const jsonic = require('jsonic');
 
-    //let remote_mqtt_endpoint = process.env['REMOTE_BROKER_URI'] || '';
-
-    function NexpieDevice(n) {
+    function Device(n) {
         RED.nodes.createNode(this,n);
         var node = this;
 
         delete node.mqttclient;
         let remote_mqtt_endpoint = null;
-
-        // Store output type setting
         node.outputType = n.outputType || "String";
 
         const deviceConfigNode = RED.nodes.getNode(n.deviceconfig);
@@ -26,15 +23,11 @@ module.exports = function(RED) {
         n.deviceid = deviceConfigNode.deviceid;
         n.devicetoken = deviceConfigNode.devicetoken;
 
-
-
         if (!n.deviceid || !n.devicetoken) {
             node.error("deviceid and devicetoken are required.");
             return;
         }
 
-
-        // Use NETPIE configuration directly from config.js
         n.mqtthost = CONFIG.NETPIE.mqtthost;
 
         let url = URL.parse(n.mqtthost);
@@ -45,7 +38,6 @@ module.exports = function(RED) {
         else if ((url.protocol=='mqtt:' || url.protocol=='mqtts:') && url.hostname ) {
             remote_mqtt_endpoint = url.protocol + '//' + url.hostname + ':' + (url.port?url.port: (url.protocol=='mqtts:'?8883:1883));
         }
-
 
         if (n.active && remote_mqtt_endpoint) {
             node.mqttclient = MQTT.connect(remote_mqtt_endpoint , {
@@ -69,8 +61,10 @@ module.exports = function(RED) {
                     for (var i=0; i<tarr.length; i++) {
                         tarr[i] = tarr[i].trim();
                         if (tarr[i]) {
-                            node.log('subscribe to topic: '+tarr[i]);
-                            if (node.mqttclient) node.mqttclient.subscribe(tarr[i]);
+                            node.log('subscribe to topic: ' + tarr[i]);
+                            if (node.mqttclient) {
+                                node.mqttclient.subscribe(tarr[i]);
+                            }
                         }
                     }
 
@@ -81,7 +75,7 @@ module.exports = function(RED) {
                             }
                             catch(e) {
                             }
-                        },1500);
+                        },500);
                     }
                 }
                 catch(e) {
@@ -91,6 +85,7 @@ module.exports = function(RED) {
 
             node.mqttclient.on('message', function(topic,payload) {
                 let payloaddata;
+
                 try {
                     payloaddata = jsonic(payload.toString());
                 }
@@ -144,13 +139,13 @@ module.exports = function(RED) {
                     payload : payloaddata,
                     raw_payload: payload
                 };
+
                 node.send(msg);
             });
 
             node.mqttclient.on('error', function(msg) {
                  node.error(msg);
             });
-
         }
         else {
             node.mqttclient = null;
@@ -200,6 +195,22 @@ module.exports = function(RED) {
                         node.mqttclient.publish(topic, msg.payload);
                     }
                 }
+                else if (msg.topic.startsWith('@msg/')) {
+                    if (typeof(msg.payload)=='object') {
+                        node.mqttclient.publish(topic, JSON.stringify(msg.payload));
+                    }
+                    else {
+                        node.mqttclient.publish(topic, msg.payload);
+                    }
+                }
+                else if (msg.topic.startsWith('@private/')) {
+                    if (typeof(msg.payload)=='object') {
+                        node.mqttclient.publish(topic, JSON.stringify(msg.payload));
+                    }
+                    else {
+                        node.mqttclient.publish(topic, msg.payload);
+                    }
+                }
             }
         });
 
@@ -217,5 +228,5 @@ module.exports = function(RED) {
 	    });
 
     }
-    RED.nodes.registerType("device",NexpieDevice);
+    RED.nodes.registerType("device",Device);
 }

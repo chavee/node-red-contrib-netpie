@@ -8,7 +8,7 @@ module.exports = function(RED) {
         let current = {};
         let getcounter = {};
         let topiclist = config.topics.trim().split('\n');
-        
+
         // Store output type setting
         node.outputType = config.outputType || "String";
 
@@ -136,12 +136,11 @@ module.exports = function(RED) {
                 }
 
                 let cleanTopic = data.topic;
-
                 // Match against subscribed topics
                 for (let i = 0; i < topiclist.length; i++) {
                     if (isMatched(topiclist[i], cleanTopic)) {
                         let payload = data.payload;
-                        
+
                         // Convert payload based on outputType setting
                         if (node.outputType === "Buffer") {
                             if (typeof payload === 'string') {
@@ -200,8 +199,6 @@ module.exports = function(RED) {
         }
 
         node.on('close', function(done) {
-            console.log('message ' + config.name + ' closed..');
-
             current.clientstatus = 0;
             updateNodeStatus(current);
 
@@ -219,7 +216,7 @@ module.exports = function(RED) {
 
             setTimeout(() => {
                 done();
-            }, 800);
+            }, 500);
         });
 
         node.on('input', function(msg) {
